@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 const app = express();
+app.use(express.json());
 app.use(cors());
 
 const tweets = [
@@ -22,18 +23,14 @@ const users = [
 ];
 
 app.post("/sign-up", (req, res) => {
-  const { username, avatar } = req.body;
-
-  const newUser = {
-    username,
-    avatar,
-  };
-
+  const newUser = req.body;
+  console.log(newUser);
   users.push(newUser);
+
   res.status(201).send("Ok!");
 });
 
-app.post("tweets", (req, res) => {
+app.post("/tweets", (req, res) => {
   const { tweet, username } = req.body;
 
   const signedUser = users.find((user) => user.username === username);
@@ -44,8 +41,8 @@ app.post("tweets", (req, res) => {
   }
 
   const newTweet = {
-    username: username,
-    tweet: tweet,
+    username,
+    tweet,
   };
 
   tweets.push(newTweet);
@@ -54,26 +51,25 @@ app.post("tweets", (req, res) => {
 });
 
 app.get("/tweets", (req, res) => {
-  let lastTweets = [];
-
-  if (tweets.length > 10) {
-    lastTweets = tweets.slice(tweets.length - 10);
-  } else {
-    lastTweets = tweets.slice();
-  }
-
-  lastTweets = lastTweets.map((tweet) => {
-    const user = users.find((user) => user.username === tweet.username);
-    if (user) {
-      return {
-        ...tweet,
-        avatar: user.avatar,
-      };
-    }
-    return tweet;
-  });
+  let lastTweets = tweets
+    .slice(-10)
+    .reverse()
+    .map((tweet) => {
+      const user = users.find((user) => user.username === tweet.username);
+      if (user) {
+        return {
+          ...tweet,
+          avatar: user.avatar,
+        };
+      }
+      return tweet;
+    });
 
   res.send(lastTweets);
+});
+
+app.get("/users", (req, res) => {
+  res.send(users);
 });
 
 const PORT = 5000;
